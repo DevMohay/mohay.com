@@ -357,7 +357,7 @@ export default function Hero() {
               <span
                 ref={nameSpanRef}
                 className="ml-[clamp(1rem,4vw)] italic text-[var(--text-primary)] [font-variation-settings:'opsz'_144,'SOFT'_90,'WONK'_1 ] cursor-pointer transition-all"
-                style={{ display: 'inline-block',overflow:'hidden', position: 'relative' }}
+                style={{ display: 'inline-block',overflow:'hidden', position: 'relative', paddingBottom:16 }}
                 aria-label={NAME_TEXT}
                 onMouseEnter={handleNameHover}
               >
