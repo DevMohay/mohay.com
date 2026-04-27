@@ -94,7 +94,12 @@
  }
 
  .chevron-animate {
+    opacity: 0;
+  }
+
+ [data-loaded="true"] .chevron-animate {
     animation: chevronFade 2s ease-in-out infinite;
+    opacity: 1;
   }
  
   @keyframes letterWave {
@@ -114,9 +119,12 @@
 
   .letter-wave {
      display: inline-block !important;
-     animation: letterWave 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
      opacity: 0;
      will-change: transform, opacity;
+   }
+
+   [data-loaded="true"] .letter-wave {
+     animation: letterWave 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
    }
 
 
