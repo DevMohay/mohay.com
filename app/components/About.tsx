@@ -46,13 +46,9 @@ export default function About() {
 
     const wrapTextLetters = (element: HTMLElement) => {
       if (!element) return;
-
+      
       const textNodes: Node[] = [];
-      const walk = document.createTreeWalker(
-        element,
-        NodeFilter.SHOW_TEXT,
-        null,
-      );
+      const walk = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
       let node;
       while ((node = walk.nextNode())) {
         textNodes.push(node);
@@ -82,25 +78,24 @@ export default function About() {
         // ── Wrap ONLY paragraph text to keep headers solid ──
         const paras = document.querySelectorAll("#articale article p");
         paras.forEach((p) => wrapTextLetters(p as HTMLElement));
-
+        
         // Refresh to account for new spans
         ScrollTrigger.refresh();
 
         // ── Pinned Article Section ──
         const letters = document.querySelectorAll(".text-letter");
         gsap.set(letters, { opacity: 0.25 });
-
+        
         const categories = document.querySelectorAll(".reveal-category");
         gsap.set(categories, { opacity: 0, y: 80 }); // More pronounced slide up
 
         const articleBox = document.querySelector("#articale article");
         const asideBox = document.querySelector("#articale aside");
-
+        
         gsap.set("#articale", { zIndex: 10, position: "relative" });
 
         // 1. Initial Entrance (Slide in before pinning)
-        gsap.fromTo(
-          [articleBox, asideBox],
+        gsap.fromTo([articleBox, asideBox], 
           { opacity: 0, y: 100 },
           {
             opacity: 1,
@@ -111,52 +106,43 @@ export default function About() {
               trigger: "#articale",
               start: "top 95%",
               toggleActions: "play none none reverse",
-            },
-          },
+            }
+          }
         );
 
         // 2. The Pinning Timeline
         const tlArticale = gsap.timeline({
           scrollTrigger: {
             trigger: "#articale",
-            start: "top 15%", // Stop a bit lower for better visibility
-            end: "+=3000", // Long scroll for smooth transition
+            start: "top 15%",      // Stop a bit lower for better visibility
+            end: "+=3000",         // Long scroll for smooth transition
             pin: true,
-            pinSpacing: true,
+            pinSpacing: true, 
             scrub: 1,
             markers: false,
             anticipatePin: 1,
-          },
+          }
         });
 
         // Letters: Smoothly reveal as we scroll
-        tlArticale.to(
-          letters,
-          {
-            opacity: 1,
-            stagger: 0.1,
-            ease: "none",
-          },
-          0,
-        );
+        tlArticale.to(letters, {
+          opacity: 1,
+          stagger: 0.1,
+          ease: "none",
+        }, 0);
 
         // Categories: Slide up one by one at specific intervals in the scroll
         if (categories.length > 0) {
           const totalDuration = letters.length * 0.1;
           categories.forEach((cat, i) => {
             // Space them out relative to the letter reveal progress
-            const startTime =
-              (totalDuration / (categories.length + 1)) * (i + 1);
-            tlArticale.to(
-              cat,
-              {
-                opacity: 1,
-                y: 0,
-                duration: 2, // Smooth slide duration
-                ease: "power2.out",
-              },
-              startTime,
-            ); // Triggered at specific scroll point
+            const startTime = (totalDuration / (categories.length + 1)) * (i + 1);
+            tlArticale.to(cat, {
+              opacity: 1,
+              y: 0,
+              duration: 2,         // Smooth slide duration
+              ease: "power2.out",
+            }, startTime);         // Triggered at specific scroll point
           });
         }
 
@@ -339,12 +325,11 @@ export default function About() {
         </header>
 
         {/* ── Prose + Visual ── */}
-        <div
-          id="articale"
-          className="grid grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]  items-start mb-10"
-        >
+        <div id="articale" className="grid grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]  items-start mb-10">
           {/* Prose */}
-          <article className="max-w-[38rem] text-[1.05rem] text-[var(--text-secondary)] leading-[1.7]">
+          <article
+            className="max-w-[38rem] text-[1.05rem] text-[var(--text-secondary)] leading-[1.7]"
+          >
             <p className="mb- after:content-[''] after:table after:clear-both">
               <span className="float-left font-display italic font-normal text-[4.5em] leading-[0.85] pt-[0.15em] pr-[0.18em] text-[var(--accent)]">
                 I
@@ -421,7 +406,9 @@ export default function About() {
           </article>
 
           {/* Visual */}
-          <aside className="flex flex-col gap-6">
+          <aside
+            className="flex flex-col gap-6"
+          >
             <figure className="relative m-0 aspect-[4/5] overflow-hidden bg-[var(--bg-surface)] border border-[var(--line)] shadow-[var(--shadow-soft)] group">
               <Image
                 src={profile}
@@ -441,7 +428,7 @@ export default function About() {
               aria-hidden="true"
             >
               <span className="font-display italic text-[2.5rem] leading-none text-[var(--accent)]">
-                Mohay
+                MH
               </span>
               <svg
                 className="w-36 h-10 opacity-70"
@@ -459,6 +446,7 @@ export default function About() {
             </div>
           </aside>
         </div>
+
 
         {/* ── Info Section ── */}
         <ul className="list-none m-0 p-0 grid grid-cols-1 md:grid-cols-3 border-y border-[var(--line)]">
@@ -489,25 +477,21 @@ export default function About() {
         </ul>
 
         {/* ── Stats Strip ── */}
-        <div className=" border-y border-[var(--line)]" id="stats-strip">
-          <div className="">
-            <ul className="stats-strip list-none m-0 p-0 grid grid-cols-2 md:grid-cols-4 border-[var(--line)]">
-              {STATS.map((stat) => (
-                <li
-                  key={stat.label}
-                  className="stat-item flex flex-col items-center justify-center py-10 px-4 text-center border-r border-[var(--line)] last:border-0 md:even:border-r"
-                >
-                  <span className="text-[clamp(2rem,4vw,3.5rem)] font-display italic font-medium leading-none text-[var(--text-primary)] mb-2">
-                    {stat.value}
-                  </span>
-                  <span className="font-mono text-[0.66rem] tracking-[0.2em] uppercase text-[var(--text-muted)]">
-                    {stat.label}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
+        <ul className="stats-strip list-none m-0 p-0 grid grid-cols-2 md:grid-cols-4 border-y border-[var(--line)]" id="stats-strip">
+          {STATS.map((stat) => (
+            <li
+              key={stat.label}
+              className="stat-item flex flex-col items-center justify-center py-10 px-4 text-center border-[var(--line)] border-r border-b md:border-b-0 [&:nth-child(2n)]:border-r-0 md:[&:nth-child(2n)]:border-r md:last:border-r-0 [&:nth-child(3)]:border-b-0 [&:nth-child(4)]:border-b-0"
+            >
+              <span className="text-[clamp(2rem,4vw,3.5rem)] font-display italic font-medium leading-none text-[var(--text-primary)] mb-2">
+                {stat.value}
+              </span>
+              <span className="font-mono text-[0.66rem] tracking-[0.2em] uppercase text-[var(--text-muted)]">
+                {stat.label}
+              </span>
+            </li>
+          ))}
+        </ul>
 
         {/* ── Pull quote ──
         <blockquote
