@@ -44,8 +44,60 @@ export default function About() {
   useEffect(() => {
     let ctx: gsap.Context;
 
+    const wrapTextLetters = (element: HTMLElement) => {
+      if (!element) return;
+      
+      const textNodes: Node[] = [];
+      const walk = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
+      let node;
+      while ((node = walk.nextNode())) {
+        textNodes.push(node);
+      }
+
+      textNodes.forEach((textNode) => {
+        const text = textNode.nodeValue || "";
+        if (text.trim() === "") return;
+
+        const fragment = document.createDocumentFragment();
+        text.split("").forEach((char) => {
+          if (char === " ") {
+            fragment.appendChild(document.createTextNode(" "));
+          } else {
+            const span = document.createElement("span");
+            span.textContent = char;
+            span.className = "text-letter inline-block"; // inline-block helps with transforms/opacity
+            fragment.appendChild(span);
+          }
+        });
+        textNode.parentNode?.replaceChild(fragment, textNode);
+      });
+    };
+
     const initGSAP = () => {
       ctx = gsap.context(() => {
+        // ── Wrap ALL article text in spans (including categories) ──
+        const articleElement = document.querySelector("#articale article");
+        if (articleElement) {
+          wrapTextLetters(articleElement as HTMLElement);
+        }
+
+        // ── Scrub Letter by letter reveal animation ──
+        const letters = document.querySelectorAll(".text-letter");
+        gsap.set(letters, { opacity: 0.25 });
+        
+        gsap.to(letters, {
+          opacity: 1,
+          stagger: 0.1,
+          ease: "none",
+          scrollTrigger: {
+            trigger: "#articale article",
+            start: "top 60%", // Start revealing when the top of the article reaches 60% down the screen
+            end: "bottom 40%", // Finish revealing when the bottom of the article reaches 40% down the screen. Increases the scrub distance making it slower.
+            scrub: 1, // Add a little smoothness to the scrub
+            markers: false,
+          },
+        });
+
         // ── Header: set hidden FIRST, then animate on scroll ──
         if (
           headerRef.current &&
@@ -100,21 +152,20 @@ export default function About() {
 
         // ── Category slide animations ──
         const categories = document.querySelectorAll(".reveal-category");
-        if (categories.length > 0) {
-          gsap.set(categories, { opacity: 0, y: 20 });
-          gsap.to(categories, {
+        categories.forEach((category) => {
+          gsap.set(category, { opacity: 0, y: 20 });
+          gsap.to(category, {
             opacity: 1,
             y: 0,
             duration: 0.8,
-            stagger: 0.15,
             ease: "power2.out",
             scrollTrigger: {
-              trigger: categories[0],
-              start: "top 80%",
+              trigger: category,
+              start: "top 85%",
               toggleActions: "play none none reset",
             },
           });
-        }
+        });
 
         // ── Stats stagger ──
         gsap.set(".stat-item", { opacity: 0, y: 100 });
@@ -241,7 +292,7 @@ export default function About() {
         </header>
 
         {/* ── Prose + Visual ── */}
-        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]  items-start mb-10">
+        <div id="articale" className="grid grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]  items-start mb-10">
           {/* Prose */}
           <article
             ref={addToReveal}
@@ -364,6 +415,8 @@ export default function About() {
             </div>
           </aside>
         </div>
+
+
         {/* ── Info Section ── */}
         <ul className="list-none m-0 p-0 grid grid-cols-1 md:grid-cols-3 border-y border-[var(--line)]">
           <li className="flex flex-col justify-center items-start md:items-center py-10 px-6 border-b md:border-b-0 md:border-r border-[var(--line)] last:border-0">
@@ -393,21 +446,23 @@ export default function About() {
         </ul>
 
         {/* ── Stats Strip ── */}
-        <ul className="stats-strip list-none m-0 p-0 grid grid-cols-2 md:grid-cols-4 border-y border-[var(--line)]" id="stats-strip">
-          {STATS.map((stat) => (
-            <li
-              key={stat.label}
-              className="stat-item flex flex-col items-center justify-center py-10 px-4 text-center border-r border-[var(--line)] last:border-0 md:even:border-r"
-            >
-              <span className="text-[clamp(2rem,4vw,3.5rem)] font-display italic font-medium leading-none text-[var(--text-primary)] mb-2">
-                {stat.value}
-              </span>
-              <span className="font-mono text-[0.66rem] tracking-[0.2em] uppercase text-[var(--text-muted)]">
-                {stat.label}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <div className="border-y border-[var(--line)]" id="stats-strip">
+          <ul className="stats-strip list-none m-0 p-0 grid grid-cols-2 md:grid-cols-4 border-[var(--line)]">
+            {STATS.map((stat) => (
+              <li
+                key={stat.label}
+                className="stat-item flex flex-col items-center justify-center py-10 px-4 text-center border-r border-[var(--line)] last:border-0 md:even:border-r"
+              >
+                <span className="text-[clamp(2rem,4vw,3.5rem)] font-display italic font-medium leading-none text-[var(--text-primary)] mb-2">
+                  {stat.value}
+                </span>
+                <span className="font-mono text-[0.66rem] tracking-[0.2em] uppercase text-[var(--text-muted)]">
+                  {stat.label}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
         {/* ── Pull quote ──
         <blockquote
