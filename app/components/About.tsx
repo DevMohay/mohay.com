@@ -88,7 +88,7 @@ export default function About() {
         gsap.set(letters, { opacity: 0.25 });
         
         const categories = document.querySelectorAll(".reveal-category");
-        gsap.set(categories, { opacity: 0, y: 20 });
+        gsap.set(categories, { opacity: 0, y: 60 }); // Increased y for a more noticeable slide-up
 
         const articleBox = document.querySelector("#articale article");
         const asideBox = document.querySelector("#articale aside");
@@ -116,10 +116,10 @@ export default function About() {
         const tlArticale = gsap.timeline({
           scrollTrigger: {
             trigger: "#articale",
-            start: "top top",
+            start: "top 10%",       // Stop slightly lower than the very top
             end: "+=2500",
             pin: true,
-            pinSpacing: true, // This is crucial for pushing down following content
+            pinSpacing: true, 
             scrub: 1,
             markers: false,
             anticipatePin: 1,
@@ -133,14 +133,14 @@ export default function About() {
           ease: "none",
         }, 0);
 
-        // Categories: slide up with stagger
+        // Categories: slide up with more distinct stagger
         if (categories.length > 0) {
           tlArticale.to(categories, {
             opacity: 1,
             y: 0,
-            stagger: 0.3,
+            stagger: 0.5,       // Increased stagger for better "one after another" feel
             ease: "power2.out",
-          }, 0.2); // Start categories shortly after letters start
+          }, 0.5);              // Start categories later in the timeline
         }
 
         // ── Header: set hidden FIRST, then animate on scroll ──
