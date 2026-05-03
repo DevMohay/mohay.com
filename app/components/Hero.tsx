@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
+import Image from 'next/image';
+import bgImage from '../../public/Picture.jpg'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -121,6 +123,7 @@ export default function Hero() {
   const pillRef        = useRef<HTMLDivElement>(null);
   const clockRef       = useRef<HTMLSpanElement>(null);
   const metaRef        = useRef<HTMLElement>(null);
+  const bottomRightMetaRef = useRef<HTMLDivElement>(null);
   const taglineRef     = useRef<HTMLParagraphElement>(null);
   const ctaRef         = useRef<HTMLDivElement>(null);
   const dividerRef     = useRef<HTMLDivElement>(null);
@@ -170,6 +173,22 @@ export default function Hero() {
       if (!chars.length) return;
 
       const ctx = gsap.context(() => {
+        const cx = window.innerWidth / 2;
+        const cy = window.innerHeight / 2;
+
+        const getOffset = (el: HTMLElement | null) => {
+          if (!el) return { x: 0, y: 0 };
+          const rect = el.getBoundingClientRect();
+          return {
+            x: cx - (rect.left + rect.width / 2),
+            y: cy - (rect.top + rect.height / 2),
+          };
+        };
+
+        const pillOffset = getOffset(pillRef.current);
+        const metaOffset = getOffset(metaRef.current);
+        const brOffset = getOffset(bottomRightMetaRef.current);
+
         const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
       // 1. Leading accent dot — drops in first
@@ -211,23 +230,38 @@ export default function Hero() {
         `-=0.2`, // slightly before name finishes
       );
 
-      // 4. UI chrome: pill + clock (fade + slide up)
+      // 4. UI chrome: Top-left pill + clock flying from center
       tl.fromTo(
-        [pillRef.current, clockRef.current],
-        { opacity: 0, y: 12 },
-        { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 },
-        0.35,
+        pillRef.current,
+        { opacity: 0, x: pillOffset.x, y: pillOffset.y, scale: 0.5 },
+        { opacity: 1, x: 0, y: 0, scale: 1, duration: 1.2, ease: 'power3.out' },
+        0.25
+      );
+      
+      tl.fromTo(
+        clockRef.current,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.5 },
+        "-=0.6"
       );
 
-      // 5. Right meta column
+      // 5. Right meta column flying from center
       tl.fromTo(
         metaRef.current,
-        { opacity: 0, x: 20 },
-        { opacity: 1, x: 0, duration: 0.6 },
-        0.5,
+        { opacity: 0, x: metaOffset.x, y: metaOffset.y, scale: 0.5 },
+        { opacity: 1, x: 0, y: 0, scale: 1, duration: 1.2, ease: 'power3.out' },
+        0.3
       );
 
-      // 6. Footer row — divider line wipes in, then tagline + CTAs
+      // 6. Bottom-right meta flying from center
+      tl.fromTo(
+        bottomRightMetaRef.current,
+        { opacity: 0, x: brOffset.x, y: brOffset.y, scale: 0.5 },
+        { opacity: 1, x: 0, y: 0, scale: 1, duration: 1.2, ease: 'power3.out' },
+        0.35
+      );
+
+      // 7. Footer row — divider line wipes in, then tagline + CTAs
       tl.fromTo(
         dividerRef.current,
         { scaleX: 0, transformOrigin: 'left center' },
@@ -335,10 +369,21 @@ export default function Hero() {
         </div>
 
         {/* ── Editorial body ── */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] items-end gap-[clamp(1.5rem,4vw,4rem)] mt-[clamp(3rem,8vh,5rem)] flex-1">
+          {/* Background Image Behind Text */}
+          {/* <div className="absolute   w-screen h-screen flex justify-center opacity-20 pointer-events-none mix-blend-screen transition-opacity duration-700">
+            <Image
+              src={bgImage}
+              alt="Mohayminul Background"
+              fill
+              className="object-cover  grayscale blur-[2px]"
+              priority
+            />
+          </div> */}
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] items-end gap-[clamp(1.5rem,4vw,4rem)] mt-[clamp(3rem,8vh,5rem)] flex-1 relative">
+
 
           {/* Name lockup — GSAP animated */}
-          <div className="min-w-0 py-8">
+          <div className="min-w-0 py-8 relative z-10">
             <h1
               ref={nameRef}
               className="text-[clamp(3.5rem,10vw,8.5rem)] leading-[0.9] font-display font-[350] flex flex-col"
@@ -410,7 +455,7 @@ export default function Hero() {
           </div>
 
           {/* Right meta */}
-          <div className="flex flex-col items-end gap-[0.85rem] text-right">
+          <div ref={bottomRightMetaRef} className="flex flex-col items-end gap-[0.85rem] text-right" style={{ opacity: 0 }}>
             <span className="font-mono text-[0.7rem] tracking-[0.2em] uppercase text-[var(--text-muted)]">
               {PORTFOLIO_META}
               <div className="flex justify-end">
