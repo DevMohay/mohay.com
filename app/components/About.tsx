@@ -79,24 +79,69 @@ export default function About() {
         const articleElement = document.querySelector("#articale article");
         if (articleElement) {
           wrapTextLetters(articleElement as HTMLElement);
+          // Refresh ScrollTrigger because text wrapping changes the container height
+          ScrollTrigger.refresh();
         }
 
-        // ── Scrub Letter by letter reveal animation ──
+        // ── Pinned Article Section with Entrance, Letter Reveal & Category Slides ──
         const letters = document.querySelectorAll(".text-letter");
         gsap.set(letters, { opacity: 0.25 });
         
-        gsap.to(letters, {
+        const categories = document.querySelectorAll(".reveal-category");
+        gsap.set(categories, { opacity: 0, y: 20 });
+
+        const articleBox = document.querySelector("#articale article");
+        const asideBox = document.querySelector("#articale aside");
+        
+        // Ensure #articale stays on top and has enough space
+        gsap.set("#articale", { zIndex: 10, position: "relative" });
+
+        // 1. Initial Entrance Animation
+        gsap.fromTo([articleBox, asideBox], 
+          { opacity: 0, y: 100 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 1.2,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: "#articale",
+              start: "top 95%",
+              toggleActions: "play none none reverse",
+            }
+          }
+        );
+
+        // 2. The Pinning Timeline
+        const tlArticale = gsap.timeline({
+          scrollTrigger: {
+            trigger: "#articale",
+            start: "top top",
+            end: "+=2500",
+            pin: true,
+            pinSpacing: true, // This is crucial for pushing down following content
+            scrub: 1,
+            markers: false,
+            anticipatePin: 1,
+          }
+        });
+
+        // Letters: reveal one by one
+        tlArticale.to(letters, {
           opacity: 1,
           stagger: 0.1,
           ease: "none",
-          scrollTrigger: {
-            trigger: "#articale article",
-            start: "top 60%", // Start revealing when the top of the article reaches 60% down the screen
-            end: "bottom 40%", // Finish revealing when the bottom of the article reaches 40% down the screen. Increases the scrub distance making it slower.
-            scrub: 1, // Add a little smoothness to the scrub
-            markers: false,
-          },
-        });
+        }, 0);
+
+        // Categories: slide up with stagger
+        if (categories.length > 0) {
+          tlArticale.to(categories, {
+            opacity: 1,
+            y: 0,
+            stagger: 0.3,
+            ease: "power2.out",
+          }, 0.2); // Start categories shortly after letters start
+        }
 
         // ── Header: set hidden FIRST, then animate on scroll ──
         if (
@@ -150,22 +195,7 @@ export default function About() {
           });
         });
 
-        // ── Category slide animations ──
-        const categories = document.querySelectorAll(".reveal-category");
-        categories.forEach((category) => {
-          gsap.set(category, { opacity: 0, y: 20 });
-          gsap.to(category, {
-            opacity: 1,
-            y: 0,
-            duration: 0.8,
-            ease: "power2.out",
-            scrollTrigger: {
-              trigger: category,
-              start: "top 85%",
-              toggleActions: "play none none reset",
-            },
-          });
-        });
+        // ── Category slide animations are now handled in the Pinned Article timeline ──
 
         // ── Stats stagger ──
         gsap.set(".stat-item", { opacity: 0, y: 100 });
@@ -295,7 +325,6 @@ export default function About() {
         <div id="articale" className="grid grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]  items-start mb-10">
           {/* Prose */}
           <article
-            ref={addToReveal}
             className="max-w-[38rem] text-[1.05rem] text-[var(--text-secondary)] leading-[1.7]"
           >
             <p className="mb- after:content-[''] after:table after:clear-both">
@@ -375,8 +404,7 @@ export default function About() {
 
           {/* Visual */}
           <aside
-            ref={addToReveal}
-            className="md:sticky md:top-24 flex flex-col gap-6"
+            className="flex flex-col gap-6"
           >
             <figure className="relative m-0 aspect-[4/5] overflow-hidden bg-[var(--bg-surface)] border border-[var(--line)] shadow-[var(--shadow-soft)] group">
               <Image
