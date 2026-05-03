@@ -10,9 +10,9 @@ import TextHover from "../../ui/TextHover";
 gsap.registerPlugin(ScrollTrigger);
 
 const STATS = [
-  { value: "6+", label: "Years shipping" },
-  { value: "40+", label: "Projects in flight" },
-  { value: "5", label: "Conference talks" },
+  { value: "4+", label: "Years Of Experience" },
+  { value: "5", label: "Live App on Play Store" },
+  { value: "30+", label: "web sites" },
   { value: "∞", label: "Cups of coffee" },
 ];
 
@@ -20,7 +20,6 @@ export default function About() {
   const containerRef = useRef<HTMLElement>(null);
   const revealRefs = useRef<(HTMLElement | null)[]>([]);
   const headerRef = useRef<HTMLElement>(null);
-
   const archRef = useRef<HTMLSpanElement[]>(null);
   const thoughtRef = useRef<HTMLSpanElement[]>(null);
   const userRef = useRef<HTMLSpanElement[]>(null);
@@ -187,18 +186,18 @@ export default function About() {
   return (
     <section
       ref={containerRef}
-      className="relative border py-10 overflow-hidden"
+      className="relative  py-10 overflow-hidden"
       id="about"
     >
       <span className="absolute left-8 top-1/2 -translate-y-1/2 [writing-mode:vertical-rl] rotate-180 font-mono text-[0.66rem] tracking-[0.2em] uppercase text-[var(--text-muted)] opacity-50 hidden xl:block">
         § 01 — About
       </span>
 
-      <div className="max-w-[1400px] mx-auto px-[var(--shell-pad-x)] flex flex-col gap-16">
+      <div className="max-w-[1400px] mx-auto px-[var(--shell-pad-x)] flex flex-col">
         {/* ── Header ── */}
         <header
           ref={headerRef}
-          className="flex flex-col md:flex-row items-start"
+          className="flex flex-col md:flex-row items-start mb-10"
         >
           {/* Left label */}
           <span
@@ -242,7 +241,7 @@ export default function About() {
         </header>
 
         {/* ── Prose + Visual ── */}
-        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-[clamp(2rem,6vw,5rem)] items-start">
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]  items-start mb-10">
           {/* Prose */}
           <article
             ref={addToReveal}
@@ -321,35 +320,6 @@ export default function About() {
                 </p>
               </div>
             </div>
-
-            <div className="w-full ">
-              <ul className="list-none m-0 p-0 pt-6 border-t border-[var(--line)] flex flex-wrap gap-x-10 gap-y-6">
-                <li className="flex flex-col gap-1">
-                  <span className="font-mono text-[0.66rem] tracking-[0.2em] uppercase text-[var(--text-muted)]">
-                    Based
-                  </span>
-                  <span className="text-[0.95rem] text-[var(--text-primary)]">
-                    BOGURA, Bangladesh
-                  </span>
-                </li>
-                <li className="flex flex-col gap-1">
-                  <span className="font-mono text-[0.66rem] tracking-[0.2em] uppercase text-[var(--text-muted)]">
-                    Education
-                  </span>
-                  <span className="text-[0.95rem] text-[var(--text-primary)]">
-                    B.Sc. in CSE / Diploma in Engineering
-                  </span>
-                </li>
-                <li className="flex flex-col gap-1">
-                  <span className="font-mono text-[0.66rem] tracking-[0.2em] uppercase text-[var(--text-muted)]">
-                    Status
-                  </span>
-                  <span className="text-[0.95rem] text-[var(--accent)]">
-                    Open to projects
-                  </span>
-                </li>
-              </ul>
-            </div>
           </article>
 
           {/* Visual */}
@@ -394,28 +364,36 @@ export default function About() {
             </div>
           </aside>
         </div>
+        {/* ── Info Section ── */}
+        <ul className="list-none m-0 p-0 grid grid-cols-1 md:grid-cols-3 border-y border-[var(--line)]">
+          <li className="flex flex-col justify-center items-start md:items-center py-10 px-6 border-b md:border-b-0 md:border-r border-[var(--line)] last:border-0">
+            <span className="font-mono text-[0.66rem] tracking-[0.2em] uppercase text-[var(--text-muted)] mb-2">
+              Based
+            </span>
+            <span className="text-[0.95rem] text-[var(--text-primary)]">
+              BOGURA, Bangladesh
+            </span>
+          </li>
+          <li className="flex flex-col justify-center items-start md:items-center py-10 px-6 border-b md:border-b-0 md:border-r border-[var(--line)] last:border-0">
+            <span className="font-mono text-[0.66rem] tracking-[0.2em] uppercase text-[var(--text-muted)] mb-2">
+              Education
+            </span>
+            <span className="text-[0.95rem] text-[var(--text-primary)] text-center">
+              B.Sc. in CSE / Diploma in Engineering
+            </span>
+          </li>
+          <li className="flex flex-col justify-center items-start md:items-center py-10 px-6 border-b md:border-b-0 border-[var(--line)] last:border-0">
+            <span className="font-mono text-[0.66rem] tracking-[0.2em] uppercase text-[var(--text-muted)] mb-2">
+              Status
+            </span>
+            <span className="text-[0.95rem] text-[var(--accent)]">
+              Open to projects
+            </span>
+          </li>
+        </ul>
 
-        {/* ── Pull quote ── */}
-        <blockquote
-          ref={addToReveal}
-          className="m-0 py-[clamp(2rem,5vw,4rem)] border-y border-[var(--line)] grid grid-cols-[minmax(2rem,5rem)_1fr] gap-6 items-start"
-        >
-          <span className="font-display italic text-[clamp(5rem,12vw,9rem)] leading-[0.6] text-[var(--accent)]">
-            "
-          </span>
-          <div>
-            <p className="m-0 font-display italic text-[clamp(1.5rem,3vw,2.5rem)] font-[350] text-[var(--text-primary)] [font-variation-settings:'opsz'_144,'SOFT'_80,'WONK'_1] max-w-[30ch]">
-              Building scalable web apps with Angular, Node & beyond
-            </p>
-            <footer className="mt-6 flex items-center gap-4 font-mono text-[0.72rem] tracking-[0.16em] uppercase text-[var(--text-muted)]">
-              <span className="w-8 h-px bg-[var(--text-muted)]"></span>
-              <span>— Mehedi, on the job</span>
-            </footer>
-          </div>
-        </blockquote>
-
-        {/* ── Stats strip ── */}
-        <ul className="stats-strip list-none m-0 p-0 grid grid-cols-2 md:grid-cols-4 border-y border-[var(--line)]">
+        {/* ── Stats Strip ── */}
+        <ul className="stats-strip list-none m-0 p-0 grid grid-cols-2 md:grid-cols-4 border-y border-[var(--line)]" id="stats-strip">
           {STATS.map((stat) => (
             <li
               key={stat.label}
@@ -430,6 +408,25 @@ export default function About() {
             </li>
           ))}
         </ul>
+
+        {/* ── Pull quote ──
+        <blockquote
+          ref={addToReveal}
+          className="m-0 py-10 border- border-[var(--line)] grid grid-cols-[minmax(2rem,5rem)_1fr] gap-6 items-start"
+        >
+          <span className="font-display italic text-[clamp(5rem,12vw,9rem)] leading-[0.6] text-[var(--accent)]">
+            "
+          </span>
+          <div>
+            <p className="m-0 font-display italic text-[clamp(1.5rem,3vw,2.5rem)] font-[350] text-[var(--text-primary)] [font-variation-settings:'opsz'_144,'SOFT'_80,'WONK'_1] max-w-[30ch]">
+              Building scalable web apps with Angular, Node & beyond
+            </p>
+            <footer className="mt-6 flex items-center gap-4 font-mono text-[0.72rem] tracking-[0.16em] uppercase text-[var(--text-muted)]">
+              <span className="w-8 h-px bg-[var(--text-muted)]"></span>
+              <span>— Mehedi, on the job</span>
+            </footer>
+          </div>
+        </blockquote> */}
       </div>
     </section>
   );
