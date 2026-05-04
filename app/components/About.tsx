@@ -418,8 +418,8 @@ export default function About() {
                 sizes="(max-w-768px) 100vw, 40vw"
               />
               <figcaption className="absolute bottom-3 left-3 right-3 flex justify-between font-mono text-[0.66rem] tracking-[0.12em] uppercase text-white bg-[rgba(14,14,12,0.55)] backdrop-blur-[6px] p-2 px-[0.6rem] rounded">
-                <span>Fig. 01</span>
-                <span>Mehedi Hasan, est. Dhaka</span>
+                <span>Profile. 01</span>
+                <span>Mohayminul Islam</span>
               </figcaption>
             </figure>
 
@@ -481,7 +481,7 @@ export default function About() {
           {STATS.map((stat) => (
             <li
               key={stat.label}
-              className="stat-item flex flex-col items-center justify-center py-10 px-4 text-center border-[var(--line)] border-r border-b md:border-b-0 [&:nth-child(2n)]:border-r-0 md:[&:nth-child(2n)]:border-r md:last:border-r-0 [&:nth-child(3)]:border-b-0 [&:nth-child(4)]:border-b-0"
+              className=" flex flex-col items-center justify-center py-10 px-4 text-center border-[var(--line)] border-r border-b md:border-b-0 [&:nth-child(2n)]:border-r-0 md:[&:nth-child(2n)]:border-r md:last:border-r-0 [&:nth-child(3)]:border-b-0 [&:nth-child(4)]:border-b-0"
             >
               <span className="text-[clamp(2rem,4vw,3.5rem)] font-display italic font-medium leading-none text-[var(--text-primary)] mb-2">
                 {stat.value}
