@@ -29,7 +29,7 @@ export default function Home() {
       {loading && <HomeLoader />}
       <div className={loading ? "hidden" : "block"}>
         <Hero />
-        {/* <About /> */}
+        <About />
         <Projects />
         <Experience />
         <Education />
