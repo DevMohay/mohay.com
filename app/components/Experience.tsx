@@ -90,6 +90,7 @@ export default function Experience() {
   const containerRef = useRef<HTMLElement>(null);
   const pinStageRef = useRef<HTMLDivElement>(null);
   const [activeCard, setActiveCard] = useState(0);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -118,6 +119,7 @@ export default function Experience() {
           filter: "blur(0px)",
         });
         setActiveCard(0);
+        setScrollProgress(0);
 
         if (cards.length === 1) return;
 
@@ -139,6 +141,7 @@ export default function Experience() {
                 Math.round(self.progress * totalSteps),
               );
               setActiveCard(idx);
+              setScrollProgress(self.progress);
             },
           },
         });
@@ -179,6 +182,7 @@ export default function Experience() {
 
       mm.add("(max-width: 767px)", () => {
         setActiveCard(0);
+        setScrollProgress(0);
       });
 
       return () => mm.revert();
@@ -244,19 +248,6 @@ export default function Experience() {
               <span className="italic text-[var(--accent)]">at the seam</span> of
               design, code, and people.
             </h2>
-            <div className="hidden md:flex items-center gap-3 font-mono text-[0.68rem] tracking-[0.16em] uppercase text-[var(--text-muted)]">
-              <span className="min-w-[3.4rem]">
-                {activeCard + 1}/{EXPERIENCE_DATA.length}
-              </span>
-              <span className="relative h-[2px] w-[8rem] bg-[var(--line)] overflow-hidden">
-                <span
-                  className="absolute left-0 top-0 h-full bg-[var(--accent)] transition-[width] duration-300"
-                  style={{
-                    width: `${((activeCard + 1) / EXPERIENCE_DATA.length) * 100}%`,
-                  }}
-                />
-              </span>
-            </div>
           </div>
         </header>
 
@@ -273,16 +264,16 @@ export default function Experience() {
           })}
         </ol>
 
-        <div
+        <div 
           ref={pinStageRef}
-          className="relative isolate hidden md:block h-[78vh] min-h-[560px] w-full overflow-hidden border-t border-[var(--line)]"
+          className="relative isolate hidden md:block h-[35vh] w-full overflow-hidden border-t border-[var(--line)]"
         >
           {EXPERIENCE_DATA.map((exp, i) => {
             const isCurrent = exp.endDate === null;
             return (
               <article
                 key={exp.company + exp.startDate}
-                className="exp-card absolute inset-0 grid w-full grid-cols-1 md:grid-cols-[minmax(8rem,10rem)_minmax(0,1fr)] gap-[clamp(1.2rem,3vw,3rem)] bg-[var(--bg-inverse)] py-[clamp(1.5rem,4vw,3rem)] px-[clamp(0.8rem,1.2vw,1.4rem)]"
+                className="exp-card absolute inset-0 grid w-full grid-cols-1 md:grid-cols-[minmax(8rem,10rem)_minmax(0,1fr)] gap-[clamp(1.2rem,3vw,3rem)] bg-[var(--bg-inverse)] py-[clamp(1.5rem,4vw,3rem)] -mt-20"
                 style={{ zIndex: EXPERIENCE_DATA.length - i }}
               >
                 <div className="flex md:block items-start gap-3 font-mono text-[0.72rem] tracking-[0.16em] uppercase text-[var(--text-muted)]">
@@ -364,11 +355,10 @@ export default function Experience() {
                       </span>
                     ))}
                   </div>
+
                 </div>
 
-                <div className="absolute bottom-0 left-0 w-full h-1 bg-[var(--accent)]" />
-
-                <div
+                {/* <div
                   className="absolute right-[clamp(0.8rem,2vw,1.6rem)] bottom-[clamp(0.8rem,2vw,1.4rem)] text-right"
                   aria-hidden="true"
                 >
@@ -378,10 +368,57 @@ export default function Experience() {
                   <span className="font-mono text-[0.66rem] tracking-[0.16em] uppercase text-[var(--text-muted)]">
                     {calculateDuration(exp.startDate, exp.endDate)}
                   </span>
-                </div>
+                </div> */}
               </article>
             );
           })}
+        </div>
+        <div className="hidden md:block " aria-hidden="true">
+          <div className="relative px-[clamp(0.8rem,1.2vw,1.4rem)] pt-2 ">
+            <div
+              className="absolute  -top-7 z-10 -translate-x-1/2 px-2.5 py-1 rounded-full border border-[var(--line-strong)] bg-transparent text-[0.66rem] font-mono tracking-[0.14em] uppercase text-[var(--accent)] transition-[left] duration-200 "
+              style={{ left: `${scrollProgress * 100}%` }}
+            >
+              {
+                formatYear(
+                  EXPERIENCE_DATA[
+                    Math.min(
+                      EXPERIENCE_DATA.length - 1,
+                      Math.round(scrollProgress * Math.max(EXPERIENCE_DATA.length - 1, 1)),
+                    )
+                  ].startDate,
+                )
+              }
+            </div>
+
+            <div className="relative h-7">
+              <span className="absolute left-0 right-0 top-3 h-[2px] bg-[var(--line)]" />
+              <span
+                className="absolute left-0 top-3 h-[2px] bg-[var(--accent)] transition-[width] duration-200"
+                style={{ width: `${scrollProgress * 100}%` }}
+              />
+              <div className="absolute left-0 right-0 top-1 flex items-center justify-between">
+                {EXPERIENCE_DATA.map((_, index) => {
+                  const dotThreshold =
+                    EXPERIENCE_DATA.length > 1
+                      ? index / (EXPERIENCE_DATA.length - 1)
+                      : 0;
+                  const isPassed = scrollProgress >= dotThreshold;
+                  const isActive = index === activeCard;
+                  return (
+                    <span
+                      key={`timeline-dot-${index}`}
+                      className={`inline-flex rounded-full border transition-all duration-200 ${
+                        isPassed
+                          ? "bg-[var(--accent)] border-[var(--accent)]"
+                          : "bg-[var(--bg-inverse)] border-[var(--line-strong)]"
+                      } ${isActive ? "w-3.5 h-3.5 shadow-[0_0_0_6px_var(--accent-soft)]" : "w-2.5 h-2.5"}`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="md:hidden flex flex-col border-t border-[var(--line)]">
@@ -438,6 +475,7 @@ export default function Experience() {
                     </span>
                   ))}
                 </div>
+
               </article>
             );
           })}
