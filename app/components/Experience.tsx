@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import "../globals.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -39,13 +38,14 @@ const EXPERIENCE_DATA: ExperienceItem[] = [
     role: "Software Engineer",
     startDate: "2023-07-01",
     endDate: "2024-12-31",
-    description: "Focused on secure multi-project access and real-time visualization tools.",
+    description:
+      "Focused on secure multi-project access and real-time visualization tools.",
     highlights: [
       "Implemented a role-based authorization framework in Angular for secure multi-project access",
       "Integrated AI-driven summarization tools into E&P sector applications to enhance reporting efficiency",
-      "Developed a 3D wellbore analysis component using React and Unity for real-time visualization"
+      "Developed a 3D wellbore analysis component using React and Unity for real-time visualization",
     ],
-    technologies: ["Angular", "React", "TailwindCSS", "C#", "WebGL (Unity)"]
+    technologies: ["Angular", "React", "TailwindCSS", "C#", "WebGL (Unity)"],
   },
   {
     company: "Brain Station 23 PLC.",
@@ -56,34 +56,10 @@ const EXPERIENCE_DATA: ExperienceItem[] = [
     highlights: [
       "Led development of high-performance Angular applications, achieving 80%+ performance improvements",
       "Enabled a 230% sales increase through seamless integration of key business features",
-      "Built advanced data visualization and project management tools for well-based industries"
+      "Built advanced data visualization and project management tools for well-based industries",
     ],
-    technologies: ["React", "Angular", "TailwindCSS", "WebGL (Unity)"]
+    technologies: ["React", "Angular", "TailwindCSS", "WebGL (Unity)"],
   },
-  // {
-  //   company: "AITS Idea Ltd.",
-  //   role: "Associate Software Engineer",
-  //   startDate: "2021-07-01",
-  //   endDate: "2022-03-31",
-  //   highlights: [
-  //     "Led development of Angular-based ERP and POS systems, achieving 40% data accuracy improvement",
-  //     "Built high-performance product website for Jain Laboratories Ltd with < 3s load times",
-  //     "Reduced bounce rate by 40% through optimized UI and rapid prototyping"
-  //   ],
-  //   technologies: ["Angular", "TailwindCSS", "Figma"]
-  // },
-  // {
-  //   company: "AITS Idea Ltd.",
-  //   role: "Junior Software Engineer",
-  //   startDate: "2021-01-01",
-  //   endDate: "2021-06-30",
-  //   description: "Assisted in the development of web applications and user interfaces.",
-  //   highlights: [
-  //     "Collaborated on frontend modules using Angular and supported bug fixing and performance tuning",
-  //     "Gained hands-on experience with RESTful API integration and responsive design"
-  //   ],
-  //   technologies: ["Angular", "JavaScript", "HTML/CSS"]
-  // }
 ];
 
 export default function Experience() {
@@ -93,102 +69,144 @@ export default function Experience() {
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      const section = containerRef.current;
-      const stage = pinStageRef.current;
-      if (!section || !stage) return;
+    let ctx: gsap.Context | undefined;
 
-      const mm = gsap.matchMedia();
+    const initGSAP = () => {
+      ctx = gsap.context(() => {
+        const section = containerRef.current;
+        const stage = pinStageRef.current;
+        if (!section || !stage) return;
 
-      mm.add("(min-width: 768px)", () => {
-        const cards = gsap.utils.toArray<HTMLElement>(".exp-card", stage);
-        if (cards.length === 0) return;
+        const mm = gsap.matchMedia();
 
-        gsap.set(cards, {
-          xPercent: 110,
-          opacity: 0,
-          scale: 0.9,
-          filter: "blur(8px)",
-          transformOrigin: "center center",
-        });
+        mm.add("(min-width: 768px)", () => {
+          const cards = gsap.utils.toArray<HTMLElement>(".exp-card", stage);
+          if (cards.length === 0) return;
 
-        gsap.set(cards[0], {
-          xPercent: 0,
-          opacity: 1,
-          scale: 1,
-          filter: "blur(0px)",
-        });
-        setActiveCard(0);
-        setScrollProgress(0);
+          gsap.set(cards, {
+            xPercent: 110,
+            opacity: 0,
+            scale: 0.9,
+            filter: "blur(8px)",
+            transformOrigin: "center center",
+          });
 
-        if (cards.length === 1) return;
+          gsap.set(cards[0], {
+            xPercent: 0,
+            opacity: 1,
+            scale: 1,
+            filter: "blur(0px)",
+          });
+          setActiveCard(0);
+          setScrollProgress(0);
 
-        const totalSteps = cards.length - 1;
+          if (cards.length === 1) return;
 
-        const timeline = gsap.timeline({
-          scrollTrigger: {
-            trigger: section,
-            pin: section,
-            start: "top top",
-            end: `+=${(cards.length - 1) * 150 + 120}%`,
-            pinSpacing: true,
-            scrub: 1,
-            anticipatePin: 1,
-            invalidateOnRefresh: true,
-            onUpdate: (self) => {
-              const idx = Math.min(
-                cards.length - 1,
-                Math.round(self.progress * totalSteps),
-              );
-              setActiveCard(idx);
-              setScrollProgress(self.progress);
+          const totalSteps = cards.length - 1;
+
+          const timeline = gsap.timeline({
+            scrollTrigger: {
+              trigger: section,
+              pin: section,
+              start: "top top",
+              // end টা viewport-based করলে layout/pin refresh এ বেশি stable থাকে
+              end: () => `+=${Math.round(window.innerHeight * (cards.length * 0.95))}`,
+              pinSpacing: true,
+              scrub: 1,
+              anticipatePin: 1,
+              invalidateOnRefresh: true,
+              refreshPriority: 0,
+              onUpdate: (self) => {
+                const idx = Math.min(
+                  cards.length - 1,
+                  Math.round(self.progress * totalSteps),
+                );
+                setActiveCard(idx);
+                setScrollProgress(self.progress);
+              },
             },
-          },
+          });
+
+          cards.forEach((card, index) => {
+            if (index === 0) return;
+            const previous = cards[index - 1];
+            const label = `step-${index}`;
+
+            timeline.addLabel(label);
+            timeline.to(
+              card,
+              {
+                xPercent: 0,
+                opacity: 1,
+                scale: 1,
+                filter: "blur(0px)",
+                duration: 1,
+                ease: "power2.out",
+              },
+              label,
+            );
+            timeline.to(
+              previous,
+              {
+                scale: 0.78,
+                opacity: 0,
+                filter: "blur(8px)",
+                duration: 1,
+                ease: "power2.inOut",
+              },
+              label,
+            );
+          });
+
+          timeline.to({}, { duration: 0.6 });
         });
 
-        cards.forEach((card, index) => {
-          if (index === 0) return;
-          const previous = cards[index - 1];
-          const label = `step-${index}`;
-
-          timeline.addLabel(label);
-          timeline.to(
-            card,
-            {
-              xPercent: 0,
-              opacity: 1,
-              scale: 1,
-              filter: "blur(0px)",
-              duration: 1,
-              ease: "power2.out",
-            },
-            label,
-          );
-          timeline.to(
-            previous,
-            {
-              scale: 0.78,
-              opacity: 0,
-              filter: "blur(8px)",
-              duration: 1,
-              ease: "power2.inOut",
-            },
-            label,
-          );
+        mm.add("(max-width: 767px)", () => {
+          setActiveCard(0);
+          setScrollProgress(0);
         });
 
-        timeline.to({}, { duration: 0.6 });
+        // IMPORTANT: About-এর pin spacer বসার পর offsets ঠিক রাখতে
+        // Experience triggers create হওয়ার পর একবার refresh
+        gsap.delayedCall(0.02, () => ScrollTrigger.refresh());
+
+        return () => mm.revert();
+      }, containerRef);
+    };
+
+    const isLoaded =
+      document.documentElement.getAttribute("data-loaded") === "true";
+
+    if (isLoaded) {
+      initGSAP();
+    } else {
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (
+            mutation.type === "attributes" &&
+            mutation.attributeName === "data-loaded" &&
+            document.documentElement.getAttribute("data-loaded") === "true"
+          ) {
+            observer.disconnect();
+            setTimeout(() => {
+              initGSAP();
+              ScrollTrigger.refresh();
+            }, 100);
+          }
+        });
       });
 
-      mm.add("(max-width: 767px)", () => {
-        setActiveCard(0);
-        setScrollProgress(0);
-      });
+      observer.observe(document.documentElement, { attributes: true });
 
-      return () => mm.revert();
-    }, containerRef);
+      return () => {
+        observer.disconnect();
+        if (ctx) ctx.revert();
+      };
+    }
 
-    return () => ctx.revert();
+    return () => {
+      if (ctx) ctx.revert();
+    };
   }, []);
 
   const formatYear = (iso: string) => new Date(iso).getFullYear().toString();
@@ -205,20 +223,6 @@ export default function Experience() {
         })
       : "Present";
     return `${s} → ${e}`;
-  };
-
-  const calculateDuration = (start: string, end: string | null) => {
-    const from = new Date(start);
-    const to = end ? new Date(end) : new Date();
-    const months =
-      (to.getFullYear() - from.getFullYear()) * 12 +
-      (to.getMonth() - from.getMonth());
-    const years = Math.floor(months / 12);
-    const remaining = months % 12;
-    const parts: string[] = [];
-    if (years > 0) parts.push(`${years}y`);
-    if (remaining > 0) parts.push(`${remaining}m`);
-    return parts.join(" ") || "< 1m";
   };
 
   return (
@@ -252,19 +256,14 @@ export default function Experience() {
         </header>
 
         <ol className="sr-only" role="list" aria-label="Experience timeline">
-          {EXPERIENCE_DATA.map((exp, i) => {
-            return (
-              <li
-                key={exp.company + exp.startDate}
-                className="sr-only"
-              >
-                {exp.role}
-              </li>
-            );
-          })}
+          {EXPERIENCE_DATA.map((exp) => (
+            <li key={exp.company + exp.startDate} className="sr-only">
+              {exp.role}
+            </li>
+          ))}
         </ol>
 
-        <div 
+        <div
           ref={pinStageRef}
           className="relative isolate hidden md:block h-[35vh] w-full overflow-hidden border-t border-[var(--line)]"
         >
@@ -355,40 +354,29 @@ export default function Experience() {
                       </span>
                     ))}
                   </div>
-
                 </div>
-
-                {/* <div
-                  className="absolute right-[clamp(0.8rem,2vw,1.6rem)] bottom-[clamp(0.8rem,2vw,1.4rem)] text-right"
-                  aria-hidden="true"
-                >
-                  <span className="block font-display italic font-[350] text-[clamp(2rem,4vw,3.2rem)] leading-[0.95] tracking-[-0.04em]">
-                    {formatYear(exp.startDate)}
-                  </span>
-                  <span className="font-mono text-[0.66rem] tracking-[0.16em] uppercase text-[var(--text-muted)]">
-                    {calculateDuration(exp.startDate, exp.endDate)}
-                  </span>
-                </div> */}
               </article>
             );
           })}
         </div>
+
         <div className="hidden md:block " aria-hidden="true">
           <div className="relative px-[clamp(0.8rem,1.2vw,1.4rem)] pt-2 ">
             <div
               className="absolute  -top-7 z-10 -translate-x-1/2 px-2.5 py-1 rounded-full border border-[var(--line-strong)] bg-transparent text-[0.66rem] font-mono tracking-[0.14em] uppercase text-[var(--accent)] transition-[left] duration-200 "
               style={{ left: `${scrollProgress * 100}%` }}
             >
-              {
-                formatYear(
-                  EXPERIENCE_DATA[
-                    Math.min(
-                      EXPERIENCE_DATA.length - 1,
-                      Math.round(scrollProgress * Math.max(EXPERIENCE_DATA.length - 1, 1)),
-                    )
-                  ].startDate,
-                )
-              }
+              {formatYear(
+                EXPERIENCE_DATA[
+                  Math.min(
+                    EXPERIENCE_DATA.length - 1,
+                    Math.round(
+                      scrollProgress *
+                        Math.max(EXPERIENCE_DATA.length - 1, 1),
+                    ),
+                  )
+                ].startDate,
+              )}
             </div>
 
             <div className="relative h-7">
@@ -412,7 +400,11 @@ export default function Experience() {
                         isPassed
                           ? "bg-[var(--accent)] border-[var(--accent)]"
                           : "bg-[var(--bg-inverse)] border-[var(--line-strong)]"
-                      } ${isActive ? "w-3.5 h-3.5 shadow-[0_0_0_6px_var(--accent-soft)]" : "w-2.5 h-2.5"}`}
+                      } ${
+                        isActive
+                          ? "w-3.5 h-3.5 shadow-[0_0_0_6px_var(--accent-soft)]"
+                          : "w-2.5 h-2.5"
+                      }`}
                     />
                   );
                 })}
@@ -475,7 +467,6 @@ export default function Experience() {
                     </span>
                   ))}
                 </div>
-
               </article>
             );
           })}
@@ -484,3 +475,4 @@ export default function Experience() {
     </section>
   );
 }
+

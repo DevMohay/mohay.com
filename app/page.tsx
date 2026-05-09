@@ -26,11 +26,11 @@ export default function Home() {
 
   return (
     <>
-      {/* {loading && <HomeLoader />}
-      <div className={loading ? "hidden" : "block"}> */}
+      {loading && <HomeLoader />}
+      <div className={loading ? "hidden" : "block"}>
         <Hero />
-        {/* <About /> */}
-        {/* <Projects /> */}
+        <About />
+        <Projects />
         <Experience />
         <Education />
         <Skills />
@@ -38,7 +38,7 @@ export default function Home() {
         <Beyond />
         <Contact />
         {/* Other sections will go here */}
-      {/* </div> */}
+      </div>
     </>
   );
 }

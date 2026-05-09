@@ -42,14 +42,14 @@ export default function About() {
   };
 
   useEffect(() => {
-    let ctx: gsap.Context;
+    let ctx: gsap.Context | undefined;
 
     const wrapTextLetters = (element: HTMLElement) => {
       if (!element) return;
-      
+
       const textNodes: Node[] = [];
       const walk = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
-      let node;
+      let node: Node | null;
       while ((node = walk.nextNode())) {
         textNodes.push(node);
       }
@@ -65,7 +65,7 @@ export default function About() {
           } else {
             const span = document.createElement("span");
             span.textContent = char;
-            span.className = "text-letter inline-block"; // inline-block helps with transforms/opacity
+            span.className = "text-letter inline-block";
             fragment.appendChild(span);
           }
         });
@@ -75,27 +75,25 @@ export default function About() {
 
     const initGSAP = () => {
       ctx = gsap.context(() => {
-        // ── Wrap ONLY paragraph text to keep headers solid ──
+        // 1) DOM mutation (wrap letters) -> create ScrollTriggers AFTER this,
+        //    so they calculate correct positions on first run.
         const paras = document.querySelectorAll("#articale article p");
         paras.forEach((p) => wrapTextLetters(p as HTMLElement));
-        
-        // Refresh to account for new spans
-        ScrollTrigger.refresh();
 
-        // ── Pinned Article Section ──
         const letters = document.querySelectorAll(".text-letter");
         gsap.set(letters, { opacity: 0.25 });
-        
+
         const categories = document.querySelectorAll(".reveal-category");
-        gsap.set(categories, { opacity: 0, y: 80 }); // More pronounced slide up
+        gsap.set(categories, { opacity: 0, y: 80 });
 
         const articleBox = document.querySelector("#articale article");
         const asideBox = document.querySelector("#articale aside");
-        
-        gsap.set("#articale", { zIndex: 10, position: "relative" });
 
-        // 1. Initial Entrance (Slide in before pinning)
-        gsap.fromTo([articleBox, asideBox], 
+        gsap.set("#articale", { position: "relative" });
+
+        // 2) Initial Entrance (before pinning)
+        gsap.fromTo(
+          [articleBox, asideBox],
           { opacity: 0, y: 100 },
           {
             opacity: 1,
@@ -106,53 +104,70 @@ export default function About() {
               trigger: "#articale",
               start: "top 95%",
               toggleActions: "play none none reverse",
-            }
-          }
+              invalidateOnRefresh: true,
+            },
+          },
         );
 
-        // 2. The Pinning Timeline
+        // 3) Pinned Article timeline
         const tlArticale = gsap.timeline({
           scrollTrigger: {
             trigger: "#articale",
-            start: "top 15%",      // Stop a bit lower for better visibility
-            end: "+=3000",         // Long scroll for smooth transition
+            start: "top 10%",
+            end: () => {
+              const articleHeight =
+                articleBox instanceof HTMLElement ? articleBox.scrollHeight : 0;
+              const asideHeight =
+                asideBox instanceof HTMLElement ? asideBox.scrollHeight : 0;
+              const base = Math.max(articleHeight, asideHeight, window.innerHeight);
+              return `+=${Math.round(base * 0.9)}`;
+            },
             pin: true,
-            pinSpacing: true, 
+            pinSpacing: true,
             scrub: 1,
             markers: false,
             anticipatePin: 1,
-          }
+            invalidateOnRefresh: true,
+            // pinned sections should refresh early so following triggers (Experience etc.)
+            // calculate after the pin-spacer is applied.
+            refreshPriority: 1,
+            preventOverlaps: "section-pins",
+          },
         });
 
-        // Letters: Smoothly reveal as we scroll
-        tlArticale.to(letters, {
-          opacity: 1,
-          stagger: 0.1,
-          ease: "none",
-        }, 0);
+        tlArticale.to(
+          letters,
+          {
+            opacity: 1,
+            stagger: 0.1,
+            ease: "none",
+          },
+          0,
+        );
 
-        // Categories: Slide up one by one at specific intervals in the scroll
         if (categories.length > 0) {
           const totalDuration = letters.length * 0.1;
           categories.forEach((cat, i) => {
-            // Space them out relative to the letter reveal progress
             const startTime = (totalDuration / (categories.length + 1)) * (i + 1);
-            tlArticale.to(cat, {
-              opacity: 1,
-              y: 0,
-              duration: 2,         // Smooth slide duration
-              ease: "power2.out",
-            }, startTime);         // Triggered at specific scroll point
+            tlArticale.to(
+              cat,
+              {
+                opacity: 1,
+                y: 0,
+                duration: 2,
+                ease: "power2.out",
+              },
+              startTime,
+            );
           });
         }
 
-        // ── Header: set hidden FIRST, then animate on scroll ──
+        // 4) Header animation
         if (
           headerRef.current &&
           headerLabelRef.current &&
           headerRightBlockRef.current
         ) {
-          // hide before any scroll
           gsap.set(headerLabelRef.current, { opacity: 0, x: -100 });
           gsap.set(headerRightBlockRef.current, { opacity: 0, x: -150 });
 
@@ -161,6 +176,7 @@ export default function About() {
               trigger: headerRef.current,
               start: "top 95%",
               toggleActions: "play none none reset",
+              invalidateOnRefresh: true,
             },
           });
 
@@ -181,7 +197,7 @@ export default function About() {
           );
         }
 
-        // ── Reveal animations ──
+        // 5) Generic reveal animations
         revealRefs.current.forEach((el) => {
           if (!el) return;
           gsap.set(el, { opacity: 0, y: 30 });
@@ -194,43 +210,43 @@ export default function About() {
               trigger: el,
               start: "top 85%",
               toggleActions: "play none none reset",
+              invalidateOnRefresh: true,
             },
           });
         });
 
-        // ── Category slide animations are now handled in the Pinned Article timeline ──
+        // 6) Stats stagger
+        // gsap.set(".stat-item", { opacity: 0, y: 100 });
+        // gsap.to(".stat-item", {
+        //   opacity: 1,
+        //   y: 100,
+        //   duration: 0.8,
+        //   stagger: 0.1,
+        //   ease: "power2.out",
+        //   scrollTrigger: {
+        //     trigger: ".stats-strip",
+        //     start: "top 90%",
+        //     toggleActions: "play none none reset",
+        //     invalidateOnRefresh: true,
+        //   },
+        // });
 
-        // ── Stats stagger ──
-        gsap.set(".stat-item", { opacity: 0, y: 100 });
-        gsap.to(".stat-item", {
-          opacity: 1,
-          y: 100,
-          duration: 0.8,
-          stagger: 0.1,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: ".stats-strip",
-            start: "top 90%",
-            toggleActions: "play none none reset",
-          },
-        });
+        // IMPORTANT: Refresh AFTER all About ScrollTriggers (including pin) are created.
+        // This makes sure next sections (Experience etc.) get correct offsets after pin-spacer.
+        gsap.delayedCall(0.02, () => ScrollTrigger.refresh());
       }, containerRef);
     };
 
-    // Check if the initial loading screen has finished
     const isLoaded =
       document.documentElement.getAttribute("data-loaded") === "true";
 
     if (isLoaded) {
       initGSAP();
     } else {
-      // Hide elements initially so they don't flash while the loader is active
-      if (headerLabelRef.current)
-        gsap.set(headerLabelRef.current, { opacity: 0 });
+      if (headerLabelRef.current) gsap.set(headerLabelRef.current, { opacity: 0 });
       if (headerRightBlockRef.current)
         gsap.set(headerRightBlockRef.current, { opacity: 0 });
 
-      // Wait for the loader to finish setting data-loaded="true"
       const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
           if (
@@ -239,10 +255,9 @@ export default function About() {
             document.documentElement.getAttribute("data-loaded") === "true"
           ) {
             observer.disconnect();
-            // Wait a tiny bit for layout to settle, refresh ScrollTrigger, and start
             setTimeout(() => {
-              ScrollTrigger.refresh();
               initGSAP();
+              ScrollTrigger.refresh();
             }, 100);
           }
         });
@@ -268,22 +283,14 @@ export default function About() {
   };
 
   return (
-    <section
-      ref={containerRef}
-      className="relative  py-10 overflow-hidden"
-      id="about"
-    >
+    <section ref={containerRef} className="relative  py-10 overflow-hidden" id="about">
       <span className="absolute left-8 top-1/2 -translate-y-1/2 [writing-mode:vertical-rl] rotate-180 font-mono text-[0.66rem] tracking-[0.2em] uppercase text-[var(--text-muted)] opacity-50 hidden xl:block">
         § 01 — About
       </span>
 
       <div className="max-w-[1400px] mx-auto px-[var(--shell-pad-x)] flex flex-col">
         {/* ── Header ── */}
-        <header
-          ref={headerRef}
-          className="flex flex-col md:flex-row items-start mb-10"
-        >
-          {/* Left label */}
+        <header ref={headerRef} className="flex flex-col md:flex-row items-start mb-10">
           <span
             ref={headerLabelRef}
             className="font-mono text-[0.7rem] tracking-[0.2em] uppercase text-[var(--accent)] md:writing-mode-vertical shrink-0 md:mt-2 whitespace-nowrap"
@@ -291,7 +298,6 @@ export default function About() {
             Engineering that thinks ahead.
           </span>
 
-          {/* Right block */}
           <div ref={headerRightBlockRef} className="w-full justify-end flex">
             <div>
               <h2 className="text-5xl font-bold tracking-wide [word-spacing:0.1em] leading-[1.05] font-display px-1">
@@ -325,90 +331,66 @@ export default function About() {
         </header>
 
         {/* ── Prose + Visual ── */}
-        <div id="articale" className="grid grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]  items-start mb-10">
-          {/* Prose */}
-          <article
-            className="max-w-[38rem] text-[1.05rem] text-[var(--text-secondary)] leading-[1.7]"
-          >
+        <div
+          id="articale"
+          className="grid grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]  items-start mb-10"
+        >
+          <article className="max-w-[38rem] text-[1.05rem] text-[var(--text-secondary)] leading-[1.7]">
             <p className="mb- after:content-[''] after:table after:clear-both">
               <span className="float-left font-display italic font-normal text-[4.5em] leading-[0.85] pt-[0.15em] pr-[0.18em] text-[var(--accent)]">
                 I
               </span>
-              'm a dedicated Software Engineer with a deep-rooted foundation in
-              Computer Science, currently pursuing my B.Sc. in CSE after
-              completing a Diploma in Engineering. My core expertise revolves
-              around building high-performance, cross-platform applications
-              using Next.js and React Native.
+              'm a dedicated Software Engineer with a deep-rooted foundation in Computer Science, currently pursuing my
+              B.Sc. in CSE after completing a Diploma in Engineering. My core expertise revolves around building
+              high-performance, cross-platform applications using Next.js and React Native.
             </p>
 
-            {/* Category Slides */}
             <div className="space-y-2 ">
-              {/* Architecture & State */}
               <div className="reveal-category border-b border-[var(--line)]">
                 <h3 className="font-display text-[1.3rem] font-semibold text-[var(--accent)] ">
                   Architecture & State
                 </h3>
                 <p className="text-[var(--text-secondary)] leading-[1.7]">
-                  I ensure seamless data flow and performance by integrating
-                  TanStack Query for efficient caching, coupled with Zod for
-                  strict schema validation, making the codebase predictable and
-                  secure.
+                  I ensure seamless data flow and performance by integrating TanStack Query for efficient caching,
+                  coupled with Zod for strict schema validation, making the codebase predictable and secure.
                 </p>
               </div>
 
-              {/* Database & Logic */}
               <div className="reveal-category border-b border-[var(--line)]">
-                <h3 className="font-display text-[1.3rem] font-semibold text-[var(--accent)]">
-                  Database & Logic
-                </h3>
+                <h3 className="font-display text-[1.3rem] font-semibold text-[var(--accent)]">Database & Logic</h3>
                 <p className="text-[var(--text-secondary)] leading-[1.7]">
-                  On the backend, I leverage the power of Prisma or Drizzle ORM
-                  to maintain type-safe interactions with databases like
-                  PostgreSQL or MongoDB, ensuring that the data layer is as
-                  scalable as the UI.
+                  On the backend, I leverage the power of Prisma or Drizzle ORM to maintain type-safe interactions with
+                  databases like PostgreSQL or MongoDB, ensuring that the data layer is as scalable as the UI.
                 </p>
               </div>
 
-              {/* Performance & UI */}
               <div className="reveal-category border-b border-[var(--line)]">
-                <h3 className="font-display text-[1.3rem] font-semibold text-[var(--accent)]">
-                  Performance & UI
-                </h3>
+                <h3 className="font-display text-[1.3rem] font-semibold text-[var(--accent)]">Performance & UI</h3>
                 <p className="text-[var(--text-secondary)] leading-[1.7]">
-                  My focus is always on lightweight UI design and fast data
-                  rendering, optimized to run smoothly across any device—from
-                  high-end desktops to mobile platforms.
+                  My focus is always on lightweight UI design and fast data rendering, optimized to run smoothly across
+                  any device—from high-end desktops to mobile platforms.
                 </p>
               </div>
 
-              {/* Security */}
               <div className="reveal-category border-b border-[var(--line)]">
-                <h3 className="font-display text-[1.3rem] font-semibold text-[var(--accent)]">
-                  Security
-                </h3>
+                <h3 className="font-display text-[1.3rem] font-semibold text-[var(--accent)]">Security</h3>
                 <p className="text-[var(--text-secondary)] leading-[1.7]">
-                  I implement secure, industry-standard authentication using
-                  NextAuth.js or Clerk, keeping user data protected while
-                  maintaining a friction-less experience.
+                  I implement secure, industry-standard authentication using NextAuth.js or Clerk, keeping user data
+                  protected while maintaining a friction-less experience.
                 </p>
               </div>
 
-              {/* Philosophy */}
               <div className="reveal-category ">
                 <p className="text-[var(--text-secondary)] leading-[1.7] italic">
-                  Whether I am designing an intuitive frontend or a reliable
-                  backend, my goal remains the same: to bridge the gap between
-                  complex requirements and clean, high-performance execution
-                  that stands the test of time.
+                  Whether I am designing an intuitive frontend or a reliable backend, my goal remains the same: to
+                  bridge the gap between complex requirements and clean, high-performance execution that stands the test
+                  of time.
                 </p>
               </div>
             </div>
           </article>
 
-          {/* Visual */}
-          <aside
-            className="flex flex-col gap-6"
-          >
+          <aside className="flex flex-col gap-6">
             <figure className="relative m-0 aspect-[4/5] overflow-hidden bg-[var(--bg-surface)] border border-[var(--line)] shadow-[var(--shadow-soft)] group">
               <Image
                 src={profile}
@@ -423,18 +405,9 @@ export default function About() {
               </figcaption>
             </figure>
 
-            <div
-              className="flex items-center gap-4 text-[var(--text-secondary)]"
-              aria-hidden="true"
-            >
-              <span className="font-display italic text-[2.5rem] leading-none text-[var(--accent)]">
-                MH
-              </span>
-              <svg
-                className="w-36 h-10 opacity-70"
-                viewBox="0 0 200 60"
-                preserveAspectRatio="none"
-              >
+            <div className="flex items-center gap-4 text-[var(--text-secondary)]" aria-hidden="true">
+              <span className="font-display italic text-[2.5rem] leading-none text-[var(--accent)]">MH</span>
+              <svg className="w-36 h-10 opacity-70" viewBox="0 0 200 60" preserveAspectRatio="none">
                 <path
                   d="M5,40 C30,5 60,55 90,30 C120,5 150,55 195,25"
                   fill="none"
@@ -447,16 +420,12 @@ export default function About() {
           </aside>
         </div>
 
-
-        {/* ── Info Section ── */}
         <ul className="list-none m-0 p-0 grid grid-cols-1 md:grid-cols-3 border-y border-[var(--line)]">
           <li className="flex flex-col justify-center items-start md:items-center py-10 px-6 border-b md:border-b-0 md:border-r border-[var(--line)] last:border-0">
             <span className="font-mono text-[0.66rem] tracking-[0.2em] uppercase text-[var(--text-muted)] mb-2">
               Based
             </span>
-            <span className="text-[0.95rem] text-[var(--text-primary)]">
-              BOGURA, Bangladesh
-            </span>
+            <span className="text-[0.95rem] text-[var(--text-primary)]">BOGURA, Bangladesh</span>
           </li>
           <li className="flex flex-col justify-center items-start md:items-center py-10 px-6 border-b md:border-b-0 md:border-r border-[var(--line)] last:border-0">
             <span className="font-mono text-[0.66rem] tracking-[0.2em] uppercase text-[var(--text-muted)] mb-2">
@@ -470,18 +439,44 @@ export default function About() {
             <span className="font-mono text-[0.66rem] tracking-[0.2em] uppercase text-[var(--text-muted)] mb-2">
               Status
             </span>
-            <span className="text-[0.95rem] text-[var(--accent)]">
-              Open to projects
-            </span>
+            <span className="text-[0.95rem] text-[var(--accent)]">Open to projects</span>
           </li>
         </ul>
 
-        {/* ── Stats Strip ── */}
-        <ul className="stats-strip list-none m-0 p-0 grid grid-cols-2 md:grid-cols-4 border-y border-[var(--line)]" id="stats-strip">
+        <ul className="list-none m-0 p-0 grid grid-cols-1 md:grid-cols-4 border-y border-[var(--line)]">
+          <li className="flex flex-col justify-center items-start md:items-center py-10 px-6 border-b md:border-b-0 md:border-r border-[var(--line)] last:border-0">
+            <span className="font-mono text-sm md:text-sm lg:text-sm  tracking-[0.2em] uppercase text-[var(--text-muted)] mb-2">
+              Years Of Experience
+            </span>
+            <span className="text-2xl md:text-3xl lg:text-4xl text-[var(--text-primary)]">4+</span>
+          </li>
+          <li className="flex flex-col justify-center items-start md:items-center py-10 px-6 border-b md:border-b-0 md:border-r border-[var(--line)] last:border-0">
+            <span className="font-mono text-sm md:text-sm lg:text-sm  tracking-[0.2em] uppercase text-[var(--text-muted)] mb-2">
+              Clients
+            </span>
+            <span className="text-2xl md:text-3xl lg:text-4xl text-[var(--text-primary)] text-center">
+              10+
+            </span>
+          </li>
+          <li className="flex flex-col justify-center items-start md:items-center py-10 px-6 border-b md:border-b-0 md:border-r border-[var(--line)] last:border-0">
+            <span className="font-mono text-sm md:text-sm lg:text-sm  tracking-[0.2em] uppercase text-[var(--text-muted)] mb-2">
+              Projects
+            </span>
+            <span className="text-2xl md:text-3xl lg:text-4xl text-[var(--accent)]">25+</span>
+          </li>
+           <li className="flex flex-col justify-center items-start md:items-center py-10 px-6 border-b md:border-b-0 border-[var(--line)] last:border-0">
+            <span className="font-mono text-sm md:text-sm lg:text-sm  tracking-[0.2em] uppercase text-[var(--text-muted)] mb-2">
+                Cup of coffee
+            </span>
+            <span className="text-2xl md:text-3xl lg:text-4xl text-[var(--accent)]">∞</span>
+          </li>
+        </ul>
+
+        {/* <ul className="list-none m-0 p-0 grid grid-cols-1 md:grid-cols-4 border-y border-[var(--line)]" id="stats-strip">
           {STATS.map((stat) => (
             <li
               key={stat.label}
-              className=" flex flex-col items-center justify-center py-10 px-4 text-center border-[var(--line)] border-r border-b md:border-b-0 [&:nth-child(2n)]:border-r-0 md:[&:nth-child(2n)]:border-r md:last:border-r-0 [&:nth-child(3)]:border-b-0 [&:nth-child(4)]:border-b-0"
+              className=" stat-item flex flex-col items-center justify-center py-10 px-4 text-center border-[var(--line)] border-r border-b md:border-b-0 [&:nth-child(2n)]:border-r-0 md:[&:nth-child(2n)]:border-r md:last:border-r-0 [&:nth-child(3)]:border-b-0 [&:nth-child(4)]:border-b-0"
             >
               <span className="text-[clamp(2rem,4vw,3.5rem)] font-display italic font-medium leading-none text-[var(--text-primary)] mb-2">
                 {stat.value}
@@ -491,27 +486,19 @@ export default function About() {
               </span>
             </li>
           ))}
-        </ul>
+        </ul> */}
 
-        {/* ── Pull quote ──
+        {/* Example reveal target usage (optional)
         <blockquote
           ref={addToReveal}
-          className="m-0 py-10 border- border-[var(--line)] grid grid-cols-[minmax(2rem,5rem)_1fr] gap-6 items-start"
+          className="m-0 py-10 border-[var(--line)] grid grid-cols-[minmax(2rem,5rem)_1fr] gap-6 items-start"
         >
-          <span className="font-display italic text-[clamp(5rem,12vw,9rem)] leading-[0.6] text-[var(--accent)]">
-            "
-          </span>
-          <div>
-            <p className="m-0 font-display italic text-[clamp(1.5rem,3vw,2.5rem)] font-[350] text-[var(--text-primary)] [font-variation-settings:'opsz'_144,'SOFT'_80,'WONK'_1] max-w-[30ch]">
-              Building scalable web apps with Angular, Node & beyond
-            </p>
-            <footer className="mt-6 flex items-center gap-4 font-mono text-[0.72rem] tracking-[0.16em] uppercase text-[var(--text-muted)]">
-              <span className="w-8 h-px bg-[var(--text-muted)]"></span>
-              <span>— Mehedi, on the job</span>
-            </footer>
-          </div>
-        </blockquote> */}
+          ...
+        </blockquote>
+        */}
+        <div ref={addToReveal as any} style={{ display: "none" }} />
       </div>
     </section>
   );
 }
+
